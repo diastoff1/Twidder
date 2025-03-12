@@ -1,0 +1,159 @@
+body {
+    background-color: #8fc8d6;
+    font-size: 14px;
+    padding-top: 100px;
+}
+
+.box_big {
+    width: 600px;
+    height: 400px;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    margin: auto;
+}
+
+.box_left{
+    width: 340px;
+    height: 400px;
+    border: black 1px solid;
+}
+
+.box_left img{
+    width: 100%;
+    height: 100%;
+}
+
+.box_right{
+    width: 250px;
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.box_login {
+    flex: 0.8;
+}
+.box_signup {
+    flex: 3;
+}
+
+.box_login, .box_signup{
+    border: black 1px solid;
+}
+
+.box_signup h3{
+    text-align:center;
+}
+
+.box_login .form_row, .box_signup .form_row{
+    margin-bottom: 5px;
+}
+
+.box_login button, .box_signup button{
+    display: flex;
+    margin-left: auto;
+}
+
+.form_row{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.form_row input{
+    width: 60%;
+}
+.form_row select{
+    width: 63%;
+}
+
+.tabbuttons {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+}
+
+.tabbuttons li{
+    list-style-type: none;
+    text-align: center;
+    width: 50px;
+    background-color: bisque;
+    border-style: double;
+}
+
+.infodiv{
+    display: flex;
+    flex-direction: column;
+    background-color: blanchedalmond;
+    border-style:inset;
+    margin: 3px;
+    padding: 5px;
+}
+
+.postdiv{
+    display: flex;
+    gap: 5px;
+    border-style: inset;
+    margin: 3px;
+    padding: 5px;
+    flex-direction: column;
+    background-color: blanchedalmond;
+
+    text-align: center;
+}
+
+.postdiv button{
+    margin-left: 80%;
+}
+.postdiv textarea{
+    height: 50px;
+}
+
+
+.walldiv {
+    display: flex;
+    flex-direction: column;
+    background-color: blanchedalmond;
+    border-style: inset;
+    margin: 3px;
+    padding: 5px;
+
+    word-wrap: break-word;
+    font-size: medium;
+}
+.walldiv button{
+    margin-left: 80%;
+}
+.walldiv h3{
+    text-align: center;
+}
+
+.searchdiv {
+    max-width: fit-content;
+
+    background-color: blanchedalmond;
+    border-style: inset;
+    margin: 3px;
+    padding: 5px;
+
+    word-wrap: break-word;
+    font-size: medium;
+}
+
+#div_changepassword{
+    width: 250px;
+    display: flex;
+    flex-direction: column;
+    background-color: blanchedalmond;
+    border-style: inset;
+    margin: 3px;
+    padding: 5px; 
+}
+
+#change_password_form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; 
+}

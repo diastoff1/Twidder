@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step2</title>
+
+    <link rel="stylesheet" href="/static/client.css">
+    <!--<script defer src="serverstub.js"></script> -->
+    <script defer src="/static/client.js"></script>
+
+    <script type="text/template" id="welcomeview">
+        <body>
+            <div class="box_big">
+
+                <div class="box_left">
+                    <img src="/static/wimage.png" alt="logo of twiddler">
+                </div>
+
+                <div class="box_right">
+                    <div class="box_login">
+                        <div class="error1"></div>
+                        <form id="login_form" onsubmit="return isValidSignIn(event)"> 
+                            <div class="form_row">
+                                <label for="login_email">Email:</label>
+                                <input type="email" id="login_email" name="login_email" placeholder="Your email" required>
+
+                            </div>
+                            <div class="form_row">
+                                <label for="login_password">Password:</label>
+                                <input type="password" id="login_password" name="login_password" placeholder="Your password" required>
+                            </div>
+                            
+                            <div id="error_login" class="errors"></div>
+                            <button type="submit">login</button>
+                        </form>
+                    </div>
+
+                    <div class="box_signup">
+                        <h3>Sign up</h3>
+                        <form id="signup_form" onsubmit="return isValidSignUp(event);">
+                            <div class="form_row">
+                                <label for="signup_email">Email:</label>
+                                <input type="email" id="signup_email" name="signup_email" placeholder="Your email" required>
+                            </div>
+                            <div class="form_row">
+                                <label for="signup_password">Password:</label>
+                                <input type="password" id="signup_password" name="signup_password" placeholder="Your password" required>
+                            </div>
+                            <div class="form_row">
+                                <label for="signup_repeat_password">Repeat:</label>
+                                <input type="password" id="signup_repeat_password" name="signup_repeat_password" placeholder="Repeat your password"     required>
+                            </div>
+                            <div class="form_row">
+                                <label for="firstname">First Name:</label>
+                                <input type="text" id="firstname" name="firstname" placeholder="Your first name" required>
+                            </div>
+                            <div class="form_row">
+                                <label for="familyname">Family name:</label>
+                                <input type="text" id="familyname" name="familyname" placeholder="Your family name" required>
+                            </div>
+                            <div class="form_row">
+                                <label for="gender">Gender:</label>
+                                <select name="gender" id="gender" required>
+                                    <option value="">select</option>
+                                    <option value="male">male</option>
+                                    <option value="female">female</option>
+                                </select>
+                            </div>
+                            <div class="form_row">
+                                <label for="country">Country:</label>
+                                <input type="text" id="country" name="country" placeholder="Your country">
+                            </div>
+                            <div class="form_row">
+                                <label for="city">City:</label>
+                                <input type="text" id="city" name="city" placeholder="Your city">
+                            </div>
+                            <div id="error_signup" class="errors"></div>
+                            <button type="submit">sign up</button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </body>
+    </script>
+
+    <script type="text/template" id="profileview">
+            <ul class="tabbuttons">
+                <li class="tabopt" data-target="home" >Home</li>
+                <li class="tabopt" data-target="browse">Browse</li>
+                <li class="tabopt" data-target="account">Account</li>
+            </ul>
+        
+            <div class="tabcontent">
+                <div class="tab" id="home" style="display: block">
+                    <h2>Home</h2>
+                    <p>youre in the home page!</p>
+                    <div class="error" id = "home_error"></div>
+                    <div class=infodiv>
+                        <h3>Your Information</h3>
+                        <div id="profile_info"></div>
+                    </div>
+                    <div class="postdiv">
+                        <h3>Post message</h3>
+                        <div class="error" id="post_message_error"></div>
+                        <textarea id="message" name="message" placeholder="Your message"></textarea>
+                        <button onclick="postMessage()">post</button>
+                    </div>
+                    <div class="walldiv">
+                        <h3>Wall</h3>
+                        <div class="error" id="wall_error"></div>
+                        <div id="wall_messages"></div>
+                        <button onclick="loadWall()">load wall</button>
+                    </div>
+                </div>
+        
+                <div class="tab" id="browse" style="display: none">
+                    <h2>Browse</h2>
+                    <div class="searchdiv">
+                        <h3>Search for user</h3>
+                        <div class="error" id="search_error"></div>
+                        <input type="text" id="search_user" name="search_user" placeholder="Email">
+                        <button onclick="searchUser()">search</button>
+                    </div>
+                </div>
+
+                <div class="tab" id="browse_result" style="display: none">
+                    <div>
+                        <h3>Information</h3>
+                        <div id="browse_info"></div>
+                    </div>
+
+                    <div class="postdiv">
+                        <h3>Post message</h3>
+                        <div class="error" id="browse_post_error"></div>
+                        <textarea id="browse_message" name="browse_message" placeholder="Your message"></textarea>
+                        <button onclick="postBrowseMessage()">post</button>
+                    </div>
+
+                    <div class="walldiv">
+                        <h3>Wall</h3>
+                        <div class="error" id="browse_wall_error"></div>
+                        <div id="browse_wall_messages"></div>
+                        <button onclick="loadBrowseWall()">load wall</button>
+                    </div>
+                </div>
+        
+                <div class="tab" id="account" style="display: none">
+                    <h2>Account</h2>
+                    <p>youre in the account page!</p>
+                    <div id="div_changepassword">
+                        <h3>Change password</h3>
+                        <form id="change_password_form" onsubmit="return isValidPassword(event)">
+                            <div class="form_row">
+                                <label for="old_password">old password:</label>
+                                <input type="password" id="old_password" name="old_password" placeholder="old password" required>
+                            </div>
+                            <div class="form_row">
+                                <label for = "new_password"> new password:</label>
+                                <input type="password" id="new_password" name = "new_password" placeholder="new password" required>
+                            </div>
+                            <div class="form_row">
+                                <label for = "new_password_repeat"> new password:</label>
+                                <input type="password" id="new_password_repeat" name = "new_password_repeat" placeholder="repeat new password" required>
+                            </div>
+                            <div class="form_row">
+                                <div id="error_tab_account" class="errors"></div>
+                                <button type="submit">change password</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div>
+                        <h3>Log out</h3>
+                        <div class="error" id="logout_message"></div>
+                        <button onclick="signOut()">sign out</button>
+                    </div>
+                </div>
+            </div>
+    </script>
+
+    <script>
+        window.onload = function() {
+            let viewContent = document.getElementById('viewContent');
+            
+            updateView();
+        }
+    </script>
+</head>
+
+<body>
+    <div id="viewContent"></div>
+</body>
+</html>
