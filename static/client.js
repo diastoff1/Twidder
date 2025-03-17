@@ -5,9 +5,10 @@ const min_pass = 8;
 function searchUser(){
     const token = localStorage.getItem('token');
     const email = document.getElementById('search_user').value;
+    const errormessage = document.getElementById('search_error');
 
     if (email === "") {
-        document.getElementById('search_error').textContent = "email cannot be empty";
+        errormessage.textContent = "email cannot be empty";
         return false;
     }
 
@@ -413,6 +414,7 @@ function isValidPassword(event) {
         const xhr = new XMLHttpRequest();
         xhr.open('PUT', '/change_password', true);
         xhr.setRequestHeader('Authorization', token);
+        xhr.setRequestHeader('Content-Type', 'application/json');
 
         xhr.onload = function () {
             if (xhr.status == 200){
@@ -434,8 +436,8 @@ function isValidPassword(event) {
         xhr.ontimeout = () => error_message_acc.textContent = "request time out error";
 
         const data = {
-            oldpassword: oldPassword,
-            newpassword: newPassword
+            oldpassword: oldPassword.value,
+            newpassword: newPassword.value
         }
 
         xhr.send(JSON.stringify(data));
@@ -499,7 +501,6 @@ function initWebsocket(token){
                 localStorage.removeItem('token');
                 websocket_connection.close();
                 document.getElementById('viewContent').innerHTML = document.getElementById('welcomeview').innerHTML;
-                window.alert("You have logged in another session.");
             }
         }
 

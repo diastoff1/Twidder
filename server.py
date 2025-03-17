@@ -32,21 +32,23 @@ def manage_websocket(ws):
         ws.close()
         return
     
-    if token in websockets:
+    email = user['email']
+
+    if email in websockets:
         try:
-            websockets[token].send('logout')
-            websockets[token].close()
+            websockets[email].send('logout')
+            websockets[email].close()
         except:
             pass
 
-    websockets[token] = ws
+    websockets[email] = ws
 
     try:
         while True:
             ws.receive()
     except:
         if token in websockets:
-            del websockets[token]
+            del websockets[email]
 
 def isvalid_email(email):
     pattern = r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
@@ -80,13 +82,13 @@ def sign_in():
         return jsonify({'success': False, 'message': 'Wrong password'}), 200
     elif user['password'] == password:
         new_token = generate_token()
-        old_token = user.get('token')
+        email = user['email']
 
-        if old_token and old_token in websockets:
+        if email and email in websockets:
             try:
-                websockets[old_token].send('logout')
-                websockets[old_token].close()
-                del websockets[old_token]
+                websockets[email].send('logout')
+                websockets[email].close()
+                del websockets[email]
             except:
                 pass
 
@@ -128,6 +130,15 @@ def sign_out():
         return jsonify({'success': False, 'message': 'Incorrect token'}), 200
 
     database_helper.add_token(user['email'], "")
+
+    email = user['email']
+    if email in websockets:
+        try:
+            websockets[email].close()
+            del websockets[email]
+        except:
+            pass
+
     return jsonify({'success': True, 'message': 'Signed out'}), 200
 
 
@@ -162,8 +173,9 @@ def get_user_data_by_email(email):
         return jsonify({'success': False, 'message': 'Incorrect token'}), 200
     
     data = database_helper.find_user(email)
-    if not data:
+    if data == None:
         return jsonify({'success': False, 'message': 'User does not exist'}), 200
+
     
     data = {
         'email': data['email'],
@@ -206,7 +218,7 @@ def get_user_messages_by_email(email):
         return jsonify({'success': False, 'message': 'User does not exist'}), 200
     
     user_id = user_searched['id']
-    print("user searched id: " + str(user_id))
+    #print("user searched id: " + str(user_id))
     
     messages = database_helper.get_messages_by_id(user_id)
 
@@ -237,7 +249,7 @@ def post_message():
     if not receiver:
         return jsonify({'success': False, 'message': 'Email not found'}), 200
     
-    print(f"Posting Message: Sender {user['id']} -> Receiver {receiver['id']}")
+    #print(f"Posting Message: Sender {user['id']} -> Receiver {receiver['id']}")
     database_helper.post_message(user['id'], receiver['id'], message)
     return jsonify({'success': True, 'message': 'Message posted'}), 200
 
@@ -258,6 +270,9 @@ def change_password():
     
     oldpassword = data.get('oldpassword')
     newpassword = data.get('newpassword')
+
+    #print(oldpassword)
+    #print(newpassword)
 
     if not oldpassword or not newpassword:
         return jsonify({'success': False, 'message': 'Missing one or both passwords'}), 200

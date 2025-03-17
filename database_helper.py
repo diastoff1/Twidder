@@ -40,7 +40,7 @@ def get_messages_by_id(user_id):
 
     messages_array = []
     for message in messages:
-        print("Message: "+message[0] + "\n")
+        #print("Message: "+message[0] + "\n")
         messages_array.append({
             'writer': message[0],
             'content': message[1]

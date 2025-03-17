@@ -5,7 +5,7 @@ create table if not exists users(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     firstname varchar(120) not null,
     familyname varchar(120) not null,
-    email varchar(120) not null,
+    email varchar(120) not null unique,
     password varchar(120) not null,
     gender varchar(120) not null,
     city varchar(120) not null,
