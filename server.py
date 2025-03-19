@@ -8,11 +8,8 @@ import re
 
 app = Flask(__name__)
 sock = Sock(app)
+
 websockets = {} 
-
-
-    
-
 
 @app.route("/", methods = ['GET'])
 def root():
@@ -69,17 +66,19 @@ def sign_in():
     data = request.get_json()
 
     if not data:
-        return jsonify({'success': False, 'message': 'No data provided'}), 200
+        return jsonify({'success': False, 'message': 'missing_fields'}), 400
 
     email = data['username']
     password = data['password']
-
+    if not email or not password:
+        return jsonify({'success': False, 'message': 'missing_fields'}), 400
+    
     user = database_helper.find_user(email)
     if not user:
-        return jsonify({'success': False, 'message': 'User does not exist'}), 200
+        return jsonify({'success': False, 'message': 'user_not_found'}), 401
     
     if user['password'] != password:
-        return jsonify({'success': False, 'message': 'Wrong password'}), 200
+        return jsonify({'success': False, 'message': 'wrong_password'}), 401
     elif user['password'] == password:
         new_token = generate_token()
         email = user['email']
@@ -100,7 +99,8 @@ def sign_up():
     data = request.get_json()
 
     if not data:
-        return jsonify({'success': False, 'message': 'No data provided'}), 200
+        return jsonify({'success': False, 'message': 'no_data'}), 400
+    
     
     email = data['email']
     password = data['password']
@@ -109,25 +109,28 @@ def sign_up():
     gender = data['gender']
     city = data['city']
     country = data['country']
+    
+    if not email or not password  or not firstname or not familyname or not gender or not city or not country:
+        return jsonify({'success': False, 'message': 'missing_fields'}), 400
 
-    if not email or not isvalid_email(email) or not password or len(password) < 8 or not firstname or not familyname or not gender or not city or not country:
-        return jsonify({'success': False, 'message': 'Incorrect data'}), 200
+    if not isvalid_email(email) or len(password) < 8:
+        return jsonify({'success': False, 'message': 'incorrect_data'}), 400
     else:
         existing = database_helper.find_user(email)
         if existing:
-            return jsonify({'success': False, 'message': 'User already exists'}), 200
+            return jsonify({'success': False, 'message': 'user_exists'}), 409
         database_helper.add_user(firstname, familyname, email, password, gender, city, country)
-        return jsonify({'success': True, 'message': 'User created'}), 200
+        return jsonify({'success': True, 'message': 'user_created'}), 201
 
 @app.route('/sign_out', methods = ['DELETE'])
 def sign_out():
     response = request.headers.get('Authorization')
     if not response:
-        return jsonify({'success': False, 'message': 'No token provided'}), 200
+        return jsonify({'success': False, 'message': 'no_token'}), 400
     
     user = database_helper.find_user_by_token(response)
     if not user:
-        return jsonify({'success': False, 'message': 'Incorrect token'}), 200
+        return jsonify({'success': False, 'message': 'invalid_token'}), 401
 
     database_helper.add_token(user['email'], "")
 
@@ -139,18 +142,18 @@ def sign_out():
         except:
             pass
 
-    return jsonify({'success': True, 'message': 'Signed out'}), 200
+    return jsonify({'success': True, 'message': 'signed_out'}), 200
 
 
 @app.route('/get_user_data_by_token', methods = ['GET'])
 def get_user_data_by_token():
     response = request.headers.get('Authorization')
     if not response:
-        return jsonify({'success': False, 'message': 'No token provided'}), 200
+        return jsonify({'success': False, 'message': 'no_token'}), 400
     
     user = database_helper.find_user_by_token(response)
     if not user:
-        return jsonify({'success': False, 'message': 'Incorrect token'}), 200
+        return jsonify({'success': False, 'message': 'invalid_token'}), 401
     
     data = {
         'email': user['email'],
@@ -160,21 +163,21 @@ def get_user_data_by_token():
         'city': user['city'],
         'country': user['country']
     }
-    return jsonify({'success': True, 'message': 'User data sent', 'data': data}), 200
+    return jsonify({'success': True, 'message': 'user_data_sent', 'data': data}), 200
 
 @app.route('/get_user_data_by_email/<email>', methods = ['GET'])
 def get_user_data_by_email(email):
     response = request.headers.get('Authorization')
     if not response:
-        return jsonify({'success': False, 'message': 'No token provided'}), 200
+        return jsonify({'success': False, 'message': 'no_token'}), 400
     
     user = database_helper.find_user_by_token(response)
     if not user:
-        return jsonify({'success': False, 'message': 'Incorrect token'}), 200
+        return jsonify({'success': False, 'message': 'invalid_token'}), 401
     
     data = database_helper.find_user(email)
     if data == None:
-        return jsonify({'success': False, 'message': 'User does not exist'}), 200
+        return jsonify({'success': False, 'message': 'user_not_found'}), 404
 
     
     data = {
@@ -186,72 +189,72 @@ def get_user_data_by_email(email):
         'country': data['country']
     }
 
-    return jsonify({'success': True, 'message': email + ' data sent', 'data': data}), 200
+    return jsonify({'success': True, 'message': 'user_data_sent', 'data': data}), 200
 
 @app.route('/get_user_messages_by_token', methods = ['GET'])
 def get_user_messages_by_token():
     response = request.headers.get('Authorization')
     if not response:
-        return jsonify({'success': False, 'message': "No token provided"}), 200
+        return jsonify({'success': False, 'message': "no_token"}), 400
     
     user = database_helper.find_user_by_token(response)
     if not user:
-        return jsonify({'success': False, 'message': 'Incorrect token'}), 200
+        return jsonify({'success': False, 'message': 'invalid_token'}), 401
     
     user_id = user['id']
     messages = database_helper.get_messages_by_id(user_id)
 
-    return jsonify({'success': True, 'message': "Messages sent", 'data': messages}), 200
+    return jsonify({'success': True, 'message': "messages_sent", 'data': messages}), 200
     
 @app.route('/get_user_messages_by_email/<email>', methods = ['GET'])
 def get_user_messages_by_email(email):
     response = request.headers.get('Authorization')
     if not response:
-        return jsonify({'success': False, 'message': 'No token provided'}), 200
+        return jsonify({'success': False, 'message': 'no_token'}), 400
     
     user = database_helper.find_user_by_token(response)
     if not user:
-        return jsonify({'success': False, 'message': 'Incorrect token'}), 200
+        return jsonify({'success': False, 'message': 'invalid_token'}), 401
     
     user_searched = database_helper.find_user(email)
     if not user_searched:
-        return jsonify({'success': False, 'message': 'User does not exist'}), 200
+        return jsonify({'success': False, 'message': 'user_not_found'}), 404
     
     user_id = user_searched['id']
     #print("user searched id: " + str(user_id))
     
     messages = database_helper.get_messages_by_id(user_id)
 
-    return jsonify({'success': True, 'message': email + ' messages sent', 'data': messages}), 200
+    return jsonify({'success': True, 'message': 'messages_sent', 'data': messages}), 200
 
 
 @app.route('/post_message', methods = ['POST'])
 def post_message():
     response = request.headers.get('Authorization')
     if not response:
-        return jsonify({'success': False, 'message': 'No token provided'}), 200
+        return jsonify({'success': False, 'message': 'no_token'}), 400
     
     user = database_helper.find_user_by_token(response)
     if not user:
-        return jsonify({'success': False, 'message': 'Incorrect token'}), 200
+        return jsonify({'success': False, 'message': 'invalid_token'}), 401
     
     data = request.get_json()
     if not data:
-        return jsonify({'success': False, 'message': 'No data provided'}), 200
+        return jsonify({'success': False, 'message': 'no_data'}), 400
     
     message = data.get('message')
     receiver_email = data.get('email')
 
     if not message or message.strip() == "" or not receiver_email:
-        return jsonify({'success': False, 'message': 'Empty field(s)'}), 200
+        return jsonify({'success': False, 'message': 'empty_fields'}), 400
     
     receiver = database_helper.find_user(receiver_email)
     if not receiver:
-        return jsonify({'success': False, 'message': 'Email not found'}), 200
+        return jsonify({'success': False, 'message': 'email_not_found'}), 404
     
     #print(f"Posting Message: Sender {user['id']} -> Receiver {receiver['id']}")
     database_helper.post_message(user['id'], receiver['id'], message)
-    return jsonify({'success': True, 'message': 'Message posted'}), 200
+    return jsonify({'success': True, 'message': 'message_posted'}), 201
 
 
 @app.route('/change_password', methods = ['PUT'])
@@ -259,14 +262,14 @@ def change_password():
     response = request.headers.get('Authorization')
     
     if not response:
-        return jsonify({'success': False, 'message': 'No token provided'}), 200
+        return jsonify({'success': False, 'message': 'no_token'}), 400
     user = database_helper.find_user_by_token(response)
     if not user:
-        return jsonify({'success': False, 'message': 'Incorrect token'}), 200
+        return jsonify({'success': False, 'message': 'invalid_token'}), 401
     
     data = request.get_json()
     if not data:
-        return jsonify({'success': False, 'message': 'No data provided'}), 200
+        return jsonify({'success': False, 'message': 'no_data'}), 400
     
     oldpassword = data.get('oldpassword')
     newpassword = data.get('newpassword')
@@ -275,16 +278,16 @@ def change_password():
     #print(newpassword)
 
     if not oldpassword or not newpassword:
-        return jsonify({'success': False, 'message': 'Missing one or both passwords'}), 200
+        return jsonify({'success': False, 'message': 'missing_passwords'}), 400
     
     if oldpassword != user['password']:
-        return jsonify({'success': False, 'message': 'Incorrect password'}), 200
+        return jsonify({'success': False, 'message': 'wrong_password'}), 401
     
     if len(newpassword) < 8:
-        return jsonify({'success': False, 'message': 'Password too short'}), 200
+        return jsonify({'success': False, 'message': 'password_too_short'}), 400
     
     database_helper.change_password(user['email'], newpassword)
-    return jsonify({'success': True, 'message': 'Password changed'}), 200
+    return jsonify({'success': True, 'message': 'password_changed'}), 200
 
 
 #if __name__ == '__main__':

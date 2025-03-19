@@ -2,6 +2,28 @@ let websocket_connection = null;
 
 const min_pass = 8;
 
+const messageMap = {
+    'no_data': "No data was provided. Please try again.",
+    'missing_fields': "Required fields are missing. Please fill in all the details.",
+    'user_not_found': "The entered username does not exist! Please try again!",
+    'wrong_password': "Incorrect password! Please try again!",
+    'user_exists': "The username is already taken! Please try another one!",
+    'incorrect_data': "The provided data is not valid.",
+    'no_token': "No token provided. Please log in.",
+    'invalid_token': "Invalid session. Please log in again.",
+    'missing_passwords': "Please fill in both the old and new passwords.",
+    'password_too_short': "The new password is too short. It must be at least 8 characters.",
+    'signed_in': "Successfully signed in.",
+    'user_created': "Account created successfully.",
+    'signed_out': "Signed out successfully.",
+    'password_changed': "Password changed successfully.",
+    'user_data_sent': "User data has been retrieved.",
+    'messages_sent': "Messages have been retrieved.",
+    'empty_fields': "Some required fields are empty. Please fill them in.",
+    'email_not_found': "The entered email address does not exist.",
+    'message_posted': "Message posted successfully!"
+};
+
 function searchUser(){
     const token = localStorage.getItem('token');
     const email = document.getElementById('search_user').value;
@@ -18,11 +40,11 @@ function searchUser(){
         xhr.setRequestHeader('Authorization', token);
 
         xhr.onload = function () {
-            if (xhr.status == 200){
-                const response = JSON.parse(xhr.responseText)
+            if (xhr.status === 200 || xhr.status === 201){
+                const response = JSON.parse(xhr.responseText);
 
                 if (response.success === false){
-                    errormessage.textContent = response.message;
+                    errormessage.textContent = messageMap[response.message];
                 }
                 else{
                     document.getElementById('browse').style.display = 'none';
@@ -41,7 +63,8 @@ function searchUser(){
 
             }
             else {
-                errormessage.textContent = 'Server error status: ' + xhr.status;
+                const response = JSON.parse(xhr.responseText);
+                errormessage.textContent = messageMap[response.message];
             }
         }
         xhr.onerror = () => errormessage.textContent = "network error";
@@ -66,11 +89,11 @@ function loadBrowseWall(){
         xhr.setRequestHeader('Authorization', token);
 
         xhr.onload = function () {
-            if (xhr.status == 200){
+            if (xhr.status === 200 || xhr.status === 201){
                 const response = JSON.parse(xhr.responseText)
 
                 if (response.success === false){
-                    errormessage.textContent = response.message;
+                    errormessage.textContent = messageMap[response.message];
                 }
                 else{
                     const messages = response.data;
@@ -84,7 +107,8 @@ function loadBrowseWall(){
 
             }
             else {
-                errormessage.textContent = 'Server error status: ' + xhr.status;
+                const response = JSON.parse(xhr.responseText);
+                errormessage.textContent = messageMap[response.message];
             }
         }
         xhr.onerror = () => errormessage.textContent = "network error";
@@ -117,19 +141,15 @@ function postBrowseMessage(){
         xhr.setRequestHeader('Authorization', token);
 
         xhr.onload = function () {
-            if (xhr.status == 200){
+            if (xhr.status === 200 || xhr.status === 201){
                 const response = JSON.parse(xhr.responseText)
 
-                if (response.success === false){
-                    errormessage.textContent = response.message;
-                }
-                else{
-                    errormessage.textContent = "message posted!";
-                }
+            errormessage.textContent = messageMap[response.message];
 
             }
             else {
-                errormessage.textContent = 'Server error status: ' + xhr.status;
+                const response = JSON.parse(xhr.responseText);
+                errormessage.textContent = messageMap[response.message];
             }
         }
         xhr.onerror = () => errormessage.textContent = "network error";
@@ -161,11 +181,11 @@ function loadWall(){
         xhr.setRequestHeader('Authorization', token);
 
         xhr.onload = function () {
-            if (xhr.status == 200){
+            if (xhr.status === 200 || xhr.status === 201){
                 const response = JSON.parse(xhr.responseText);
 
                 if (response.success === false){
-                    errormessage.textContent = response.message;
+                    errormessage.textContent = messageMap[response.message];
                 }
                 else{
                     const messageWall = document.getElementById('wall_messages');
@@ -181,7 +201,8 @@ function loadWall(){
 
             }
             else {
-                errormessage.textContent = 'Server error status: ' + xhr.status;
+                const response = JSON.parse(xhr.responseText);
+                errormessage.textContent = messageMap[response.message];
             }
         }
 
@@ -213,11 +234,11 @@ function postMessage(){
         xhr1.setRequestHeader('Authorization', token);
 
         xhr1.onload = function () {
-            if (xhr1.status === 200){
+            if (xhr1.status === 200 || xhr1.status === 201){
                 const response1 = JSON.parse(xhr1.responseText)
 
                 if (response1.success === false){
-                    errormessage.textContent = response1.message;
+                    errormessage.textContent = messageMap[response1.message];
                 }
                 else{
                     const email = response1.data.email;
@@ -228,18 +249,19 @@ function postMessage(){
                     xhr2.setRequestHeader('Content-Type', 'application/json');
 
                     xhr2.onload = function() {
-                        if(xhr2.status === 200){
+                        if(xhr2.status === 200 || xhr2.status === 201){
                             const response2 = JSON.parse(xhr2.responseText);
 
                             if(response2.success === false){
-                                errormessage.textContent = response2.message;
+                                errormessage.textContent = messageMap[response2.message];
                             }
                             else{
                                 errormessage.textContent = "Message posted!";
                             }
                         }
                         else{
-                            errormessage.textContent = 'Server error status2: ' + xhr2.status;
+                            const response2 = JSON.parse(xhr2.responseText);
+                            errormessage.textContent = xhr2.status + ": " + messageMap[response2.message];
                         }
                     }
 
@@ -256,7 +278,8 @@ function postMessage(){
 
             }
             else {
-                errormessage.textContent = 'Server error status: ' + xhr1.status;
+                const response1 = JSON.parse(xhr1.responseText);
+                errormessage.textContent = xhr1.status + ": " + messageMap[response1.message];
             }
         }
         xhr1.onerror = () => errormessage.textContent = "network error";
@@ -288,11 +311,11 @@ function isValidSignIn(event) {
         xhr.open('POST', '/sign_in', true);
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.onload = function () {
-            if (xhr.status === 200) {
+            if (xhr.status === 200 || xhr.status === 201) {
                 const response = JSON.parse(xhr.responseText)
 
                 if (response.success === false){
-                    error_message.textContent = response.message;
+                    error_message.textContent = messageMap[response.message];
                 }
                 else{
                     localStorage.setItem('token', response.data);
@@ -300,7 +323,8 @@ function isValidSignIn(event) {
                 }
             }  
             else {
-                error_message.textContent = 'Server error status: ' + xhr.status;
+                const response = JSON.parse(xhr.responseText);
+                error_message.textContent = messageMap[response.message];
             }   
         };
 
@@ -350,18 +374,19 @@ function isValidSignUp(event) {
         xhr.open('POST', '/sign_up', true);
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.onload = function () {
-            if (xhr.status === 200) {
+            if (xhr.status === 200 || xhr.status === 201) {
                 const response = JSON.parse(xhr.responseText)
 
                 if (response.success === false){
-                    error_message.textContent = response.message;
+                    error_message.textContent = messageMap[response.message];
                 }
                 else{
                     error_message.textContent = "registered!";
                 }
             }  
             else {
-                error_message.textContent = 'Server error status: ' + xhr.status;
+                const response = JSON.parse(xhr.responseText);
+                error_message.textContent = messageMap[response.message];
             }   
         };
 
@@ -399,7 +424,7 @@ function isValidPassword(event) {
     error_message_acc.textContent = '';
 
     if (newPassword.value.length < min_pass) {
-        error_message_acc.textContent = "password must have at leats 8 chars";
+        error_message_acc.textContent = "password must have at least 8 chars";
         return false;
     }
 
@@ -417,11 +442,11 @@ function isValidPassword(event) {
         xhr.setRequestHeader('Content-Type', 'application/json');
 
         xhr.onload = function () {
-            if (xhr.status == 200){
+            if (xhr.status === 200 || xhr.status === 201){
                 const response = JSON.parse(xhr.responseText)
 
                 if (response.success === false){
-                    error_message_acc.textContent = response.message;
+                    error_message_acc.textContent = messageMap[response.message];
                 }
                 else{
                     error_message_acc.textContent = "password has changed!";            
@@ -429,7 +454,8 @@ function isValidPassword(event) {
 
             }
             else {
-                error_message_acc.textContent = 'Server error status: ' + xhr.status;
+                const response = JSON.parse(xhr.responseText);
+                error_message_acc.textContent = messageMap[response.message];
             }
         }
         xhr.onerror = () => error_message_acc.textContent = "network error";
@@ -460,7 +486,7 @@ function signOut(){
         xhr.setRequestHeader('Authorization', token);
 
         xhr.onload = function () {
-            if (xhr.status == 200){
+            if (xhr.status === 200 || xhr.status === 201){
                 const response = JSON.parse(xhr.responseText)
 
                 if (response.success === false){
@@ -533,12 +559,12 @@ function loadInfo(){
         xhr.setRequestHeader('Authorization', token);
 
         xhr.onload = function () {
-            if (xhr.status == 200){
+            if (xhr.status === 200 || xhr.status === 201){
                 const response = JSON.parse(xhr.responseText);
                 console.log(response.message);
 
                 if (response.success === false){
-                    errormessage.textContent = response.message;
+                    errormessage.textContent = messageMap[response.message];
                 }
                 else{
                     let content = "";
@@ -554,7 +580,8 @@ function loadInfo(){
 
             }
             else {
-                errormessage.textContent = 'Server error status: ' + xhr.status;
+                const response = JSON.parse(xhr.responseText);
+                errormessage.textContent = messageMap[response.message];
             }
         }
 
