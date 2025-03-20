@@ -157,3 +157,23 @@ body {
     flex-direction: column;
     gap: 10px; 
 }
+
+.status-area {
+    margin: 20px 0;
+    padding: 10px;
+    border: 2px dashed #ccc;
+  }
+  
+  #status_box {
+    min-height: 50px;
+    padding: 10px;
+  }
+  
+  .message {
+    cursor: grab;
+    padding: 8px;
+  }
+  
+  .message:active {
+    cursor: grabbing;
+  }

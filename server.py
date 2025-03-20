@@ -1,15 +1,48 @@
 from flask import Flask, request, jsonify
 from flask_sock import Sock
+from flask_bcrypt import Bcrypt
 
 import database_helper
 import math
 import random
 import re
 
+import hmac
+import hashlib
+from datetime import datetime, timezone 
+
 app = Flask(__name__)
 sock = Sock(app)
+bcrypt = Bcrypt(app)
 
 websockets = {} 
+
+@app.before_request
+def verify_hmac():
+    # skip for the following routes
+    if request.path in ['/','/sign_in', '/sign_up', '/ws'] or request.path.startswith('/static/'):
+        return
+
+    token = request.headers.get('Authorization')
+    signature = request.headers.get('X-Signature')
+    timestamp = request.headers.get('X-Timestamp')
+
+    if not (token and signature and timestamp):
+        return jsonify({'success': False, 'message': 'missing_security_headers'}), 401
+
+    # valide for max of 100s
+    current_time = datetime.now(timezone.utc).timestamp()
+    if abs(current_time - int(timestamp)) > 100:
+        return jsonify({'success': False, 'message': 'stale_request'}), 401
+
+    # recompute HMAC signature
+    secret = token.encode()  # token string to bytes
+    payload = timestamp.encode() + request.get_data()  # timestamp + request body
+    expected_sig = hmac.new(secret, payload, hashlib.sha256).hexdigest()
+
+    # compare signatures
+    if not hmac.compare_digest(expected_sig, signature):
+        return jsonify({'success': False, 'message': 'invalid_signature'}), 401
 
 @app.route("/", methods = ['GET'])
 def root():
@@ -22,9 +55,32 @@ def teardown(exception):
 @sock.route("/ws")
 def manage_websocket(ws):
     token = request.args.get('token')
+    timestamp = request.args.get('timestamp')
+    signature = request.args.get('signature')
 
-    if token and token.strip():
-        user = database_helper.find_user_by_token(token)
+    if not (token and timestamp and signature):
+        ws.close()
+        return
+
+    # 1 minute for difference
+    try:
+        current_time = datetime.now(timezone.utc).timestamp()
+        if abs(current_time - int(timestamp)) > 60:
+            ws.close()
+            return
+    except:
+        ws.close()
+        return
+
+    secret = token.encode()
+    payload = timestamp.encode()  
+    expected_sig = hmac.new(secret, payload, hashlib.sha256).hexdigest()
+
+    if not hmac.compare_digest(expected_sig, signature):
+        ws.close()
+        return
+    
+    user = database_helper.find_user_by_token(token)
     if not user or not token:
         ws.close()
         return
@@ -77,9 +133,9 @@ def sign_in():
     if not user:
         return jsonify({'success': False, 'message': 'user_not_found'}), 401
     
-    if user['password'] != password:
+    if not bcrypt.check_password_hash(user['password'], password):
         return jsonify({'success': False, 'message': 'wrong_password'}), 401
-    elif user['password'] == password:
+    else:
         new_token = generate_token()
         email = user['email']
 
@@ -119,7 +175,10 @@ def sign_up():
         existing = database_helper.find_user(email)
         if existing:
             return jsonify({'success': False, 'message': 'user_exists'}), 409
-        database_helper.add_user(firstname, familyname, email, password, gender, city, country)
+        
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+
+        database_helper.add_user(firstname, familyname, email, hashed_password, gender, city, country)
         return jsonify({'success': True, 'message': 'user_created'}), 201
 
 @app.route('/sign_out', methods = ['DELETE'])
@@ -274,19 +333,19 @@ def change_password():
     oldpassword = data.get('oldpassword')
     newpassword = data.get('newpassword')
 
-    #print(oldpassword)
-    #print(newpassword)
-
     if not oldpassword or not newpassword:
         return jsonify({'success': False, 'message': 'missing_passwords'}), 400
     
-    if oldpassword != user['password']:
+    if not bcrypt.check_password_hash(user['password'], oldpassword):
         return jsonify({'success': False, 'message': 'wrong_password'}), 401
     
     if len(newpassword) < 8:
         return jsonify({'success': False, 'message': 'password_too_short'}), 400
     
-    database_helper.change_password(user['email'], newpassword)
+    # hash the new password before saving
+    hashed_newpassword = bcrypt.generate_password_hash(newpassword).decode('utf-8')
+    database_helper.change_password(user['email'], hashed_newpassword) 
+    
     return jsonify({'success': True, 'message': 'password_changed'}), 200
 
 

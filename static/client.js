@@ -24,6 +24,16 @@ const messageMap = {
     'message_posted': "Message posted successfully!"
 };
 
+function allowDrop(event) {
+    event.preventDefault();
+  }
+  
+  function handleDrop(event) {
+    event.preventDefault();
+    const messageContent = event.dataTransfer.getData("text");
+    document.getElementById("status_box").innerHTML = messageContent;
+  }
+
 function searchUser(){
     const token = localStorage.getItem('token');
     const email = document.getElementById('search_user').value;
@@ -35,9 +45,15 @@ function searchUser(){
     }
 
     try {
+        const timestamp = Math.floor(Date.now() / 1000).toString();;
+        const payload = ""; // no body for get request
+        const signature = CryptoJS.HmacSHA256(timestamp + payload, token).toString();
+
         const xhr = new XMLHttpRequest();
         xhr.open('GET', '/get_user_data_by_email/' + email, true);
         xhr.setRequestHeader('Authorization', token);
+        xhr.setRequestHeader('X-Signature', signature);
+        xhr.setRequestHeader('X-Timestamp', timestamp);
 
         xhr.onload = function () {
             if (xhr.status === 200 || xhr.status === 201){
@@ -84,9 +100,15 @@ function loadBrowseWall(){
     const errormessage = document.getElementById('browse_wall_error');
 
     try {
+        const timestamp = Math.floor(Date.now() / 1000).toString();;
+        const payload = ""; // no body for get request
+        const signature = CryptoJS.HmacSHA256(timestamp + payload, token).toString();
+
         const xhr = new XMLHttpRequest();
         xhr.open('GET', '/get_user_messages_by_email/' + email, true);
         xhr.setRequestHeader('Authorization', token);
+        xhr.setRequestHeader('X-Signature', signature);
+        xhr.setRequestHeader('X-Timestamp', timestamp);
 
         xhr.onload = function () {
             if (xhr.status === 200 || xhr.status === 201){
@@ -135,10 +157,20 @@ function postBrowseMessage(){
     }
 
     try {
+        const data = {
+            message: message, 
+            email: email 
+        };
+        const timestamp = Math.floor(Date.now() / 1000).toString();;
+        const payload = JSON.stringify(data);
+        const signature = CryptoJS.HmacSHA256(timestamp + payload, token).toString();
+
         const xhr = new XMLHttpRequest();
         xhr.open('POST', '/post_message', true);
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.setRequestHeader('Authorization', token);
+        xhr.setRequestHeader('X-Signature', signature);
+        xhr.setRequestHeader('X-Timestamp', timestamp);
 
         xhr.onload = function () {
             if (xhr.status === 200 || xhr.status === 201){
@@ -155,10 +187,6 @@ function postBrowseMessage(){
         xhr.onerror = () => errormessage.textContent = "network error";
         xhr.ontimeout = () => errormessage.textContent = "request time out error";
 
-        data = {
-            message: message,
-            email: email
-        }
         xhr.send(JSON.stringify(data));
     } catch (error) {
         errormessage.textContent = "Something went wrong";
@@ -173,12 +201,19 @@ function loadWall(){
 
     if (!token){
         errormessage.textContent = "Invalid user";
+        return;
     }
 
     try {
+        const timestamp = Math.floor(Date.now() / 1000).toString();;
+        const payload = ""; 
+        const signature = CryptoJS.HmacSHA256(timestamp + payload, token).toString();
+
         const xhr = new XMLHttpRequest();
         xhr.open('GET', '/get_user_messages_by_token', true);
         xhr.setRequestHeader('Authorization', token);
+        xhr.setRequestHeader('X-Signature', signature);  
+        xhr.setRequestHeader('X-Timestamp', timestamp);
 
         xhr.onload = function () {
             if (xhr.status === 200 || xhr.status === 201){
@@ -193,7 +228,10 @@ function loadWall(){
 
                     let content = "<hr>";
                     messages.forEach(message => {
-                        content += "<p>" + message.content + "</p><hr>";
+                        content += `<p draggable="true" 
+                                    ondragstart="event.dataTransfer.setData('text', '${message.content}')"
+                                    class="message">
+                                    ${message.content}</p><hr>`;
                     });
                     messageWall.innerHTML = content;
                     
@@ -229,9 +267,16 @@ function postMessage(){
     }
 
     try {
+        const timestamp1 = Math.floor(Date.now() / 1000).toString();;
+        const payload1 = ""; 
+        const signature1 = CryptoJS.HmacSHA256(timestamp1 + payload1, token).toString();
+
         const xhr1 = new XMLHttpRequest();
         xhr1.open('GET', '/get_user_data_by_token', true);
         xhr1.setRequestHeader('Authorization', token);
+        xhr1.setRequestHeader('X-Signature', signature1); 
+        xhr1.setRequestHeader('X-Timestamp', timestamp1);
+
 
         xhr1.onload = function () {
             if (xhr1.status === 200 || xhr1.status === 201){
@@ -242,11 +287,21 @@ function postMessage(){
                 }
                 else{
                     const email = response1.data.email;
-                    const xhr2 = new XMLHttpRequest();
+                    const data = {
+                        email: email, 
+                        message: message 
+                    };
+                    const timestamp2 = Math.floor(Date.now() / 1000).toString();;
+                    const payload2 = JSON.stringify(data);
+                    const signature2 = CryptoJS.HmacSHA256(timestamp2 + payload2, token).toString();
 
+                    const xhr2 = new XMLHttpRequest();
                     xhr2.open('POST', '/post_message', true);
                     xhr2.setRequestHeader('Authorization', token);
                     xhr2.setRequestHeader('Content-Type', 'application/json');
+                    xhr2.setRequestHeader('X-Signature', signature2);
+                    xhr2.setRequestHeader('X-Timestamp', timestamp2);
+
 
                     xhr2.onload = function() {
                         if(xhr2.status === 200 || xhr2.status === 201){
@@ -263,11 +318,6 @@ function postMessage(){
                             const response2 = JSON.parse(xhr2.responseText);
                             errormessage.textContent = xhr2.status + ": " + messageMap[response2.message];
                         }
-                    }
-
-                    const data = {
-                        email: email,
-                        message: message
                     }
 
                     xhr2.onerror = () => errormessage.textContent = "network error2";
@@ -303,7 +353,7 @@ function isValidSignIn(event) {
 
     try {
         if (password.value.length < min_pass) {
-            error_message.textContent = `password must have at least 8 chars`;
+            error_message.textContent = 'password must have at least 8 chars';
             return false;
         }   
         
@@ -436,10 +486,20 @@ function isValidPassword(event) {
     const token = localStorage.getItem('token');
 
     try {
+        const data = {
+            oldpassword: oldPassword.value, 
+            newpassword: newPassword.value 
+        };
+        const timestamp = Math.floor(Date.now() / 1000).toString();;
+        const payload = JSON.stringify(data);
+        const signature = CryptoJS.HmacSHA256(timestamp + payload, token).toString();
+
         const xhr = new XMLHttpRequest();
         xhr.open('PUT', '/change_password', true);
         xhr.setRequestHeader('Authorization', token);
         xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('X-Signature', signature); 
+        xhr.setRequestHeader('X-Timestamp', timestamp);
 
         xhr.onload = function () {
             if (xhr.status === 200 || xhr.status === 201){
@@ -461,11 +521,6 @@ function isValidPassword(event) {
         xhr.onerror = () => error_message_acc.textContent = "network error";
         xhr.ontimeout = () => error_message_acc.textContent = "request time out error";
 
-        const data = {
-            oldpassword: oldPassword.value,
-            newpassword: newPassword.value
-        }
-
         xhr.send(JSON.stringify(data));
     } catch (error) {
         error_message_acc.textContent = "Something went wrong";
@@ -481,9 +536,15 @@ function signOut(){
     const error_message = document.getElementById('logout_message');
 
     try {
+        const timestamp = Math.floor(Date.now() / 1000).toString();;
+        const payload = ""; 
+        const signature = CryptoJS.HmacSHA256(timestamp + payload, token).toString();
+
         const xhr = new XMLHttpRequest();
         xhr.open('DELETE', '/sign_out', true);
         xhr.setRequestHeader('Authorization', token);
+        xhr.setRequestHeader('X-Signature', signature); 
+        xhr.setRequestHeader('X-Timestamp', timestamp);
 
         xhr.onload = function () {
             if (xhr.status === 200 || xhr.status === 201){
@@ -516,19 +577,28 @@ function signOut(){
 function initWebsocket(token){
 
     try {
-        if (websocket_connection){
+        if (websocket_connection) {
             websocket_connection.close();
         }
 
-        websocket_connection = new WebSocket('http://' + window.location.host + '/ws?token=' + token);
+        const timestamp = Math.floor(Date.now() / 1000).toString();;
+        const payload = timestamp; // WebSocket has no body
+        const signature = CryptoJS.HmacSHA256(payload, token).toString();
+
+        websocket_connection = new WebSocket(
+            'http://' + window.location.host + 
+            '/ws?token=' + token + 
+            '&timestamp=' + timestamp + 
+            '&signature=' + signature
+        );
 
         websocket_connection.onmessage = function(e) {
-            if(e.data === 'logout'){
+            if (e.data === 'logout') {
                 localStorage.removeItem('token');
                 websocket_connection.close();
                 document.getElementById('viewContent').innerHTML = document.getElementById('welcomeview').innerHTML;
             }
-        }
+        };
 
     } catch (error) {
         console.log("Something wrong happened: " + error);
@@ -554,9 +624,15 @@ function loadInfo(){
     const errormessage = document.getElementById('home_error');
 
     try {
+        const timestamp = Math.floor(Date.now() / 1000).toString();;
+        const payload = ""; 
+        const signature = CryptoJS.HmacSHA256(timestamp + payload, token).toString();
+
         const xhr = new XMLHttpRequest();
         xhr.open('GET', '/get_user_data_by_token', true);
         xhr.setRequestHeader('Authorization', token);
+        xhr.setRequestHeader('X-Signature', signature); 
+        xhr.setRequestHeader('X-Timestamp', timestamp);
 
         xhr.onload = function () {
             if (xhr.status === 200 || xhr.status === 201){

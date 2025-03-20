@@ -7,6 +7,7 @@
 
     <link rel="stylesheet" href="/static/client.css">
     <!--<script defer src="serverstub.js"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script defer src="/static/client.js"></script>
 
     <script type="text/template" id="welcomeview">
@@ -100,6 +101,14 @@
                     <div class=infodiv>
                         <h3>Your Information</h3>
                         <div id="profile_info"></div>
+                    </div>
+                    <div class="status-area">
+                        <h4>Drag a message here to fix it:</h4>
+                        <div 
+                          id="status_box" 
+                          ondragover="allowDrop(event)" 
+                          ondrop="handleDrop(event)"
+                        ></div>
                     </div>
                     <div class="postdiv">
                         <h3>Post message</h3>
