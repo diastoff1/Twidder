@@ -26,13 +26,13 @@ const messageMap = {
 
 function allowDrop(event) {
     event.preventDefault();
-  }
+}
   
-  function handleDrop(event) {
+function handleDrop(event) {
     event.preventDefault();
     const messageContent = event.dataTransfer.getData("text");
     document.getElementById("status_box").innerHTML = messageContent;
-  }
+}
 
 function searchUser(){
     const token = localStorage.getItem('token');

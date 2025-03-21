@@ -62,7 +62,7 @@ def manage_websocket(ws):
         ws.close()
         return
 
-    # 1 minute for difference
+    # 1 minute for difference between the request and receivetime is the max acceptable
     try:
         current_time = datetime.now(timezone.utc).timestamp()
         if abs(current_time - int(timestamp)) > 60:
@@ -72,10 +72,12 @@ def manage_websocket(ws):
         ws.close()
         return
 
+    #we encpde our parameters transforming string into bytes, reconstructing the signature
     secret = token.encode()
     payload = timestamp.encode()  
     expected_sig = hmac.new(secret, payload, hashlib.sha256).hexdigest()
 
+    # here we compare our reconstructed signature with the one we received
     if not hmac.compare_digest(expected_sig, signature):
         ws.close()
         return
@@ -87,6 +89,7 @@ def manage_websocket(ws):
     
     email = user['email']
 
+    # we check if there is a connection with the same user in different browsers, if yes, close
     if email in websockets:
         try:
             websockets[email].send('logout')
@@ -96,6 +99,7 @@ def manage_websocket(ws):
 
     websockets[email] = ws
 
+    # keep the conection
     try:
         while True:
             ws.receive()
@@ -110,6 +114,7 @@ def isvalid_email(email):
         return False
     return True
 
+# to generate the token we use a random numbers from 
 def generate_token():
     token_length = 36
     token = ""
@@ -119,6 +124,7 @@ def generate_token():
 
 @app.route('/sign_in', methods = ['POST'])
 def sign_in():
+    #receive the information from the request
     data = request.get_json()
 
     if not data:
@@ -133,6 +139,7 @@ def sign_in():
     if not user:
         return jsonify({'success': False, 'message': 'user_not_found'}), 401
     
+    #hash the password received and then compare with the one stored in the db
     if not bcrypt.check_password_hash(user['password'], password):
         return jsonify({'success': False, 'message': 'wrong_password'}), 401
     else:
@@ -208,7 +215,7 @@ def sign_out():
 def get_user_data_by_token():
     response = request.headers.get('Authorization')
     if not response:
-        return jsonify({'success': False, 'message': 'no_token'}), 400
+        return jsonify({'success': False, 'message': 'no_token'}), 401
     
     user = database_helper.find_user_by_token(response)
     if not user:
@@ -228,7 +235,7 @@ def get_user_data_by_token():
 def get_user_data_by_email(email):
     response = request.headers.get('Authorization')
     if not response:
-        return jsonify({'success': False, 'message': 'no_token'}), 400
+        return jsonify({'success': False, 'message': 'no_token'}), 401
     
     user = database_helper.find_user_by_token(response)
     if not user:
@@ -254,7 +261,7 @@ def get_user_data_by_email(email):
 def get_user_messages_by_token():
     response = request.headers.get('Authorization')
     if not response:
-        return jsonify({'success': False, 'message': "no_token"}), 400
+        return jsonify({'success': False, 'message': "no_token"}), 401
     
     user = database_helper.find_user_by_token(response)
     if not user:
@@ -269,7 +276,7 @@ def get_user_messages_by_token():
 def get_user_messages_by_email(email):
     response = request.headers.get('Authorization')
     if not response:
-        return jsonify({'success': False, 'message': 'no_token'}), 400
+        return jsonify({'success': False, 'message': 'no_token'}), 401
     
     user = database_helper.find_user_by_token(response)
     if not user:
@@ -291,7 +298,7 @@ def get_user_messages_by_email(email):
 def post_message():
     response = request.headers.get('Authorization')
     if not response:
-        return jsonify({'success': False, 'message': 'no_token'}), 400
+        return jsonify({'success': False, 'message': 'no_token'}), 401
     
     user = database_helper.find_user_by_token(response)
     if not user:
