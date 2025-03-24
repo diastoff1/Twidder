@@ -556,6 +556,7 @@ function signOut(){
                 }
                 else{
                     localStorage.removeItem('token');
+                    localStorage.removeItem('email');
                     document.getElementById('viewContent').innerHTML = document.getElementById('welcomeview').innerHTML;
                 }
 
