@@ -51,7 +51,7 @@ function searchUser(){
 
         const xhr = new XMLHttpRequest();
         xhr.open('GET', '/get_user_data_by_email/' + email, true);
-        xhr.setRequestHeader('Authorization', token);
+        xhr.setRequestHeader('Authorization', localStorage.getItem('email'));
         xhr.setRequestHeader('X-Signature', signature);
         xhr.setRequestHeader('X-Timestamp', timestamp);
 
@@ -106,7 +106,7 @@ function loadBrowseWall(){
 
         const xhr = new XMLHttpRequest();
         xhr.open('GET', '/get_user_messages_by_email/' + email, true);
-        xhr.setRequestHeader('Authorization', token);
+        xhr.setRequestHeader('Authorization', localStorage.getItem('email'));
         xhr.setRequestHeader('X-Signature', signature);
         xhr.setRequestHeader('X-Timestamp', timestamp);
 
@@ -168,7 +168,7 @@ function postBrowseMessage(){
         const xhr = new XMLHttpRequest();
         xhr.open('POST', '/post_message', true);
         xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.setRequestHeader('Authorization', token);
+        xhr.setRequestHeader('Authorization', localStorage.getItem('email'));
         xhr.setRequestHeader('X-Signature', signature);
         xhr.setRequestHeader('X-Timestamp', timestamp);
 
@@ -211,7 +211,7 @@ function loadWall(){
 
         const xhr = new XMLHttpRequest();
         xhr.open('GET', '/get_user_messages_by_token', true);
-        xhr.setRequestHeader('Authorization', token);
+        xhr.setRequestHeader('Authorization', localStorage.getItem('email'));
         xhr.setRequestHeader('X-Signature', signature);  
         xhr.setRequestHeader('X-Timestamp', timestamp);
 
@@ -273,7 +273,7 @@ function postMessage(){
 
         const xhr1 = new XMLHttpRequest();
         xhr1.open('GET', '/get_user_data_by_token', true);
-        xhr1.setRequestHeader('Authorization', token);
+        xhr1.setRequestHeader('Authorization', localStorage.getItem('email'));
         xhr1.setRequestHeader('X-Signature', signature1); 
         xhr1.setRequestHeader('X-Timestamp', timestamp1);
 
@@ -297,7 +297,7 @@ function postMessage(){
 
                     const xhr2 = new XMLHttpRequest();
                     xhr2.open('POST', '/post_message', true);
-                    xhr2.setRequestHeader('Authorization', token);
+                    xhr2.setRequestHeader('Authorization', localStorage.getItem('email'));
                     xhr2.setRequestHeader('Content-Type', 'application/json');
                     xhr2.setRequestHeader('X-Signature', signature2);
                     xhr2.setRequestHeader('X-Timestamp', timestamp2);
@@ -369,6 +369,7 @@ function isValidSignIn(event) {
                 }
                 else{
                     localStorage.setItem('token', response.data);
+                    localStorage.setItem('email', email.value);
                     updateView();
                 }
             }  
@@ -496,7 +497,7 @@ function isValidPassword(event) {
 
         const xhr = new XMLHttpRequest();
         xhr.open('PUT', '/change_password', true);
-        xhr.setRequestHeader('Authorization', token);
+        xhr.setRequestHeader('Authorization', localStorage.getItem('email'));
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.setRequestHeader('X-Signature', signature); 
         xhr.setRequestHeader('X-Timestamp', timestamp);
@@ -542,7 +543,7 @@ function signOut(){
 
         const xhr = new XMLHttpRequest();
         xhr.open('DELETE', '/sign_out', true);
-        xhr.setRequestHeader('Authorization', token);
+        xhr.setRequestHeader('Authorization', localStorage.getItem('email'));
         xhr.setRequestHeader('X-Signature', signature); 
         xhr.setRequestHeader('X-Timestamp', timestamp);
 
@@ -582,13 +583,13 @@ function initWebsocket(token){
         }
 
         const timestamp = Math.floor(Date.now() / 1000).toString();;
-        const payload = timestamp; // WebSocket has no body
+        const payload = localStorage.getItem('email') + timestamp; // I put email in the payload here too 
         const signature = CryptoJS.HmacSHA256(payload, token).toString();
 
         websocket_connection = new WebSocket(
             'http://' + window.location.host + 
-            '/ws?token=' + token + 
-            '&timestamp=' + timestamp + 
+            '/ws?email=' + localStorage.getItem('email')+ 
+            '&timestamp=' + timestamp+ 
             '&signature=' + signature
         );
 
@@ -630,7 +631,7 @@ function loadInfo(){
 
         const xhr = new XMLHttpRequest();
         xhr.open('GET', '/get_user_data_by_token', true);
-        xhr.setRequestHeader('Authorization', token);
+        xhr.setRequestHeader('Authorization', localStorage.getItem('email'));
         xhr.setRequestHeader('X-Signature', signature); 
         xhr.setRequestHeader('X-Timestamp', timestamp);
 

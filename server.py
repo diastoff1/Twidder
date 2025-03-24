@@ -17,18 +17,24 @@ bcrypt = Bcrypt(app)
 
 websockets = {} 
 
+#do the verifications before processing the request
 @app.before_request
 def verify_hmac():
     # skip for the following routes
     if request.path in ['/','/sign_in', '/sign_up', '/ws'] or request.path.startswith('/static/'):
         return
 
-    token = request.headers.get('Authorization')
+    email = request.headers.get('Authorization')
     signature = request.headers.get('X-Signature')
     timestamp = request.headers.get('X-Timestamp')
 
-    if not (token and signature and timestamp):
+    if not (email and signature and timestamp):
         return jsonify({'success': False, 'message': 'missing_security_headers'}), 401
+
+    user = database_helper.find_user(email)
+    if not user:
+        return jsonify({'success': False, 'message': 'user_not_found'}), 401
+    token = user['token']
 
     # valide for max of 100s
     current_time = datetime.now(timezone.utc).timestamp()
@@ -54,7 +60,14 @@ def teardown(exception):
 
 @sock.route("/ws")
 def manage_websocket(ws):
-    token = request.args.get('token')
+    email = request.args.get('email')  
+    user = database_helper.find_user(email)
+
+    if not user:
+        ws.close()
+        return
+    
+    token = user['token']
     timestamp = request.args.get('timestamp')
     signature = request.args.get('signature')
 
@@ -74,7 +87,7 @@ def manage_websocket(ws):
 
     #we encpde our parameters transforming string into bytes, reconstructing the signature
     secret = token.encode()
-    payload = timestamp.encode()  
+    payload = (email + timestamp).encode() 
     expected_sig = hmac.new(secret, payload, hashlib.sha256).hexdigest()
 
     # here we compare our reconstructed signature with the one we received
@@ -190,11 +203,8 @@ def sign_up():
 
 @app.route('/sign_out', methods = ['DELETE'])
 def sign_out():
-    response = request.headers.get('Authorization')
-    if not response:
-        return jsonify({'success': False, 'message': 'no_token'}), 400
-    
-    user = database_helper.find_user_by_token(response)
+    email = request.headers.get('Authorization') 
+    user = database_helper.find_user(email)
     if not user:
         return jsonify({'success': False, 'message': 'invalid_token'}), 401
 
@@ -213,11 +223,8 @@ def sign_out():
 
 @app.route('/get_user_data_by_token', methods = ['GET'])
 def get_user_data_by_token():
-    response = request.headers.get('Authorization')
-    if not response:
-        return jsonify({'success': False, 'message': 'no_token'}), 401
-    
-    user = database_helper.find_user_by_token(response)
+    email = request.headers.get('Authorization')
+    user = database_helper.find_user(email)
     if not user:
         return jsonify({'success': False, 'message': 'invalid_token'}), 401
     
@@ -233,11 +240,8 @@ def get_user_data_by_token():
 
 @app.route('/get_user_data_by_email/<email>', methods = ['GET'])
 def get_user_data_by_email(email):
-    response = request.headers.get('Authorization')
-    if not response:
-        return jsonify({'success': False, 'message': 'no_token'}), 401
-    
-    user = database_helper.find_user_by_token(response)
+    email_header = request.headers.get('Authorization')
+    user = database_helper.find_user(email_header)
     if not user:
         return jsonify({'success': False, 'message': 'invalid_token'}), 401
     
@@ -259,11 +263,8 @@ def get_user_data_by_email(email):
 
 @app.route('/get_user_messages_by_token', methods = ['GET'])
 def get_user_messages_by_token():
-    response = request.headers.get('Authorization')
-    if not response:
-        return jsonify({'success': False, 'message': "no_token"}), 401
-    
-    user = database_helper.find_user_by_token(response)
+    email = request.headers.get('Authorization')
+    user = database_helper.find_user(email)
     if not user:
         return jsonify({'success': False, 'message': 'invalid_token'}), 401
     
@@ -274,11 +275,8 @@ def get_user_messages_by_token():
     
 @app.route('/get_user_messages_by_email/<email>', methods = ['GET'])
 def get_user_messages_by_email(email):
-    response = request.headers.get('Authorization')
-    if not response:
-        return jsonify({'success': False, 'message': 'no_token'}), 401
-    
-    user = database_helper.find_user_by_token(response)
+    email_header = request.headers.get('Authorization')
+    user = database_helper.find_user(email_header)
     if not user:
         return jsonify({'success': False, 'message': 'invalid_token'}), 401
     
@@ -296,11 +294,8 @@ def get_user_messages_by_email(email):
 
 @app.route('/post_message', methods = ['POST'])
 def post_message():
-    response = request.headers.get('Authorization')
-    if not response:
-        return jsonify({'success': False, 'message': 'no_token'}), 401
-    
-    user = database_helper.find_user_by_token(response)
+    email = request.headers.get('Authorization')
+    user = database_helper.find_user(email)
     if not user:
         return jsonify({'success': False, 'message': 'invalid_token'}), 401
     
@@ -325,11 +320,8 @@ def post_message():
 
 @app.route('/change_password', methods = ['PUT'])
 def change_password():
-    response = request.headers.get('Authorization')
-    
-    if not response:
-        return jsonify({'success': False, 'message': 'no_token'}), 400
-    user = database_helper.find_user_by_token(response)
+    email = request.headers.get('Authorization')
+    user = database_helper.find_user(email)
     if not user:
         return jsonify({'success': False, 'message': 'invalid_token'}), 401
     
