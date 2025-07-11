@@ -72,7 +72,6 @@ To get Twidder up and running on your local machine, follow these steps:
     * **Create `database.db`**: An empty `database.db` file will be created when `sqlite3.connect(DATABASE_URI)` is first called.
     * **Populate Schema**: You should run the SQL commands from `schema.sql` to create the `users` and `messages` tables.
     * 
-    ```
     Run this using a Python script or `sqlite3` command line:
     ```bash
     sqlite3 database.db < schema.sql
