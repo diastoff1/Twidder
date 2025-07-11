@@ -66,49 +66,14 @@ To get Twidder up and running on your local machine, follow these steps:
     ```
 
 3.  **Install Dependencies:**
-    It's assumed your `requirements.txt` would contain:
-    ```
-    Flask
-    Flask-Sock
-    Flask-Bcrypt
-    ```
-    Install them using:
-    ```bash
-    pip install Flask Flask-Sock Flask-Bcrypt
-    ```
 
 4.  **Initialize the Database:**
-    The project uses an SQLite database. You'll need to create the `database.db` file and set up the schema. Based on `database_helper.py`, you'd typically have a `schema.sql` file (which wasn't provided, but is crucial for initial setup) and a way to run it.
+    The project uses an SQLite database. You'll need to create the `database.db` file and set up the schema. 
     * **Create `database.db`**: An empty `database.db` file will be created when `sqlite3.connect(DATABASE_URI)` is first called.
-    * **Populate Schema**: You would typically run the SQL commands from `schema.sql` to create the `users` and `messages` tables. (You might need to create a `schema.sql` file if you don't have one and manually run it against `database.db`.)
-
-    Example `schema.sql` (inferred from `database_helper.py` comments and queries):
-    ```sql
-    DROP TABLE IF EXISTS messages;
-    DROP TABLE IF EXISTS users;
-
-    CREATE TABLE users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        firstname VARCHAR(120) NOT NULL,
-        familyname VARCHAR(120) NOT NULL,
-        email VARCHAR(120) NOT NULL UNIQUE,
-        password VARCHAR(120) NOT NULL,
-        gender VARCHAR(120) NOT NULL,
-        city VARCHAR(120) NOT NULL,
-        country VARCHAR(120) NOT NULL,
-        token VARCHAR(36)
-    );
-
-    CREATE TABLE messages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        writer_id INTEGER NOT NULL,
-        receiver_id INTEGER NOT NULL,
-        content TEXT NOT NULL,
-        FOREIGN KEY (writer_id) REFERENCES users(id),
-        FOREIGN KEY (receiver_id) REFERENCES users(id)
-    );
+    * **Populate Schema**: You should run the SQL commands from `schema.sql` to create the `users` and `messages` tables.
+    * 
     ```
-    You would typically run this using a Python script or `sqlite3` command line:
+    Run this using a Python script or `sqlite3` command line:
     ```bash
     sqlite3 database.db < schema.sql
     ```
@@ -117,7 +82,7 @@ To get Twidder up and running on your local machine, follow these steps:
     ```bash
     python server.py
     ```
-    The application will typically run on `http://127.0.0.1:5000/`.
+    The application will run on `http://127.0.0.1:5000/`.
 
 ## Usage
 
